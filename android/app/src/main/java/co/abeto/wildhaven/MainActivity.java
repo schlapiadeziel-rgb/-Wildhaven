@@ -9,9 +9,12 @@ import android.view.Window;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewClientCompat;
+import android.webkit.WebResourceResponse;
 
 public final class MainActivity extends Activity {
-  private static final String GAME_URL = "https://wildhaven-isle.fhdp7dk4fc.chatgpt.site";
+  private static final String GAME_URL = "https://appassets.androidplatform.net/index.html";
   private WebView game;
 
   @SuppressLint("SetJavaScriptEnabled")
@@ -35,11 +38,15 @@ public final class MainActivity extends Activity {
     game.getSettings().setDomStorageEnabled(true);
     game.getSettings().setMediaPlaybackRequiresUserGesture(false);
     game.getSettings().setBuiltInZoomControls(false);
-    game.setWebViewClient(new WebViewClient() {
+    final WebViewAssetLoader assets = new WebViewAssetLoader.Builder()
+      .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
+      .build();
+    game.setWebViewClient(new WebViewClientCompat() {
+      @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+        return assets.shouldInterceptRequest(request.getUrl());
+      }
       @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-        String url = request.getUrl().toString();
-        if ("https".equals(request.getUrl().getScheme()) && "wildhaven-isle.fhdp7dk4fc.chatgpt.site".equals(request.getUrl().getHost())) return false;
-        return true;
+        return !"appassets.androidplatform.net".equals(request.getUrl().getHost());
       }
     });
     setContentView(game);
