@@ -9,6 +9,9 @@ import android.view.Window;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
 import android.webkit.WebResourceResponse;
@@ -38,6 +41,7 @@ public final class MainActivity extends Activity {
     game.getSettings().setDomStorageEnabled(true);
     game.getSettings().setMediaPlaybackRequiresUserGesture(false);
     game.getSettings().setBuiltInZoomControls(false);
+    game.addJavascriptInterface(new NativeLink(this, game), "WildhavenLink");
     final WebViewAssetLoader assets = new WebViewAssetLoader.Builder()
       .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
       .build();
@@ -50,6 +54,9 @@ public final class MainActivity extends Activity {
       }
     });
     setContentView(game);
+    if (Build.VERSION.SDK_INT >= 31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+      requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN}, 41);
+    }
     game.loadUrl(GAME_URL);
   }
 

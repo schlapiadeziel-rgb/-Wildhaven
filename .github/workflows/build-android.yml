@@ -46,4 +46,4 @@ jobs:
           RELEASE_TAG: android-test-${{ github.run_number }}
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-debug.apk --target "$RELEASE_SHA" --title "Wildhaven Android offline test" --prerelease --notes "Game assets are bundled. Single-player works without a server after installation. LAN and Bluetooth multiplayer are still under development. No physical-device testing has been completed."
+          gh release create "$RELEASE_TAG" Wildhaven-debug.apk --target "$RELEASE_SHA" --title "Wildhaven Android nearby multiplayer test" --prerelease --notes "Game assets are bundled for offline single-player. Experimental LAN and paired-device Bluetooth rooms are included. Nearby multiplayer requires permissions and physical-device testing before it can be considered stable."
