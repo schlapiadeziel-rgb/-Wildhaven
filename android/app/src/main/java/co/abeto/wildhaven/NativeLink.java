@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -29,6 +31,14 @@ public final class NativeLink {
   NativeLink(Context context, WebView web) { this.context=context; this.web=web; }
 
   @JavascriptInterface public String capabilities() { return "{\"lan\":true,\"bluetooth\":true,\"offline\":true}"; }
+  @JavascriptInterface public int appVersionCode() { return BuildConfig.VERSION_CODE; }
+  @JavascriptInterface public void openUpdate(String url) {
+    try {
+      Uri uri=Uri.parse(url);
+      if (!"https".equals(uri.getScheme()) || !"github.com".equals(uri.getHost())) return;
+      Intent intent=new Intent(Intent.ACTION_VIEW,uri); intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(intent);
+    } catch(Exception e) { error(e); }
+  }
 
   @JavascriptInterface public String hostLan() {
     stop(); running=true;
