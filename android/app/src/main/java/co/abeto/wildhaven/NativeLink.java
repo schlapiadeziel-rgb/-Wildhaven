@@ -31,7 +31,10 @@ public final class NativeLink {
   NativeLink(Context context, WebView web) { this.context=context; this.web=web; }
 
   @JavascriptInterface public String capabilities() { return "{\"lan\":true,\"bluetooth\":true,\"offline\":true}"; }
-  @JavascriptInterface public int appVersionCode() { return BuildConfig.VERSION_CODE; }
+  @JavascriptInterface public int appVersionCode() {
+    try { return context.getPackageManager().getPackageInfo(context.getPackageName(),0).versionCode; }
+    catch(Exception e) { return 0; }
+  }
   @JavascriptInterface public void openUpdate(String url) {
     try {
       Uri uri=Uri.parse(url);
