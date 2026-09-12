@@ -43,6 +43,7 @@ const ICONS = {
   tent: '<path d="m3 21 9-18 9 18ZM8 21l4-9 4 9M8 3l4 5 4-5"/>',
   lamp: '<path d="M9 3h6M12 3v3m-5 4 5-4 5 4v7H7Zm0 7-2 3h14l-2-3m-5 0v-5"/>',
   fence: '<path d="M3 21V5l2-2 2 2v16M17 21V5l2-2 2 2v16M7 9h10M7 16h10"/>',
+  recycle: '<path d="M4 7h16M9 7V4h6v3m-9 0 1 14h10l1-14M10 11v6m4-6v6"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1"/>',
   map: '<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/>',
 };
@@ -409,11 +410,6 @@ function openBuild() {
       )}</div><p class="panel-intro" style="font-size:12px;margin-top:20px;margin-bottom:0">帐篷可以设置重生点，也能从地图快速返回。每座岛最多放置 150 个建筑。</p>`,
     "MAKE IT YOURS",
   );
-  const recycle = document.createElement("button");
-  recycle.className = "subtle";
-  recycle.textContent = "回收附近建筑";
-  recycle.onclick = () => { act("recycle"); events(); save(); closePanel(); };
-  $("#panel-content").append(recycle);
   const homeButton=document.createElement("button");homeButton.className="primary";homeButton.textContent="我的家园 · 管理与评分";homeButton.onclick=openHome;
   $("#panel-content").prepend(homeButton);
   const categories=document.createElement("div");categories.className="button-row";
@@ -464,14 +460,14 @@ function openHome() {
 function openBuilding(id, message="") {
   const b=game.buildings.find(b=>b.id===id);if(!b){openHome();return;}
   const usable=dist(b,game.player)<=4.5 && game.canUseBuilding(b),owner=game.ownsBuilding(b),level=b.level||1;
-  setPanel(BUILDS[b.type].name,`<p class="panel-intro">${level} 级 · 耐久 ${Math.ceil(b.durability)}/${b.maxDurability} · 距离 ${Math.ceil(dist(b,game.player))} 米</p><p id="home-feedback" role="status">${escapeHtml(message||(!usable?"靠近建筑，并由主人授权后操作。":"选择下方操作。"))}</p>${b.type==="chest"?`<p>箱内 ${Object.values(b.storage||{}).reduce((a,v)=>a+v,0)}/200 · 每次存取 1 或 10 份材料</p><div class="home-storage">${Object.entries(ITEMS).map(([key,name])=>`<div><strong>${name}</strong><span>背包 ${game.inventory[key]||0} / 箱内 ${b.storage?.[key]||0}</span><div class="button-row">${[1,10].map(n=>`<button data-store="${key}" data-count="${n}" ${!usable||(game.inventory[key]||0)<n?"disabled":""}>存 ${n}</button><button data-take="${key}" data-count="${n}" ${!usable||(b.storage?.[key]||0)<n?"disabled":""}>取 ${n}</button>`).join("")}</div></div>`).join("")}</div>`:""}<div class="home-actions">${b.type==="door"?`<button id="home-door" ${usable?"":"disabled"}>${b.open?"关门":"开门"}</button>`:""}${["floor","wall","door","roof"].includes(b.type)?`<button id="home-upgrade" ${usable&&owner&&level<3?"":"disabled"}>${level>=3?"已达强化 3 级":level===1?"升级石制 · 石材 8 木材 2":"升级强化 · 石材 12 晶石 4"}</button>`:""}<button id="home-recycle" ${usable&&owner?"":"disabled"}>回收建筑</button><button id="home-back">返回家园</button></div>${owner&&online?`<h3>授权队友</h3><p>允许指定队友操作这座建筑的门和箱子；升级和回收仍限主人。</p>${(online.peers||[]).filter(p=>p.id!==game.player.id).map(p=>`<button data-home-peer="${escapeHtml(p.id)}">${(b.guests||[]).includes(p.id)?"撤销授权":"允许使用"} · ${escapeHtml(p.name||p.id.slice(0,8))}</button>`).join("")}`:""}`,"HOME");
+  setPanel(BUILDS[b.type].name,`<p class="panel-intro">${level} 级 · 耐久 ${Math.ceil(b.durability)}/${b.maxDurability} · 距离 ${Math.ceil(dist(b,game.player))} 米</p><p id="home-feedback" role="status">${escapeHtml(message||(!usable?"靠近建筑，并由主人授权后操作。":"选择下方操作。"))}</p>${b.type==="chest"?`<p>箱内 ${Object.values(b.storage||{}).reduce((a,v)=>a+v,0)}/200 · 每次存取 1 或 10 份材料</p><div class="home-storage">${Object.entries(ITEMS).map(([key,name])=>`<div><strong>${name}</strong><span>背包 ${game.inventory[key]||0} / 箱内 ${b.storage?.[key]||0}</span><div class="button-row">${[1,10].map(n=>`<button data-store="${key}" data-count="${n}" ${!usable||(game.inventory[key]||0)<n?"disabled":""}>存 ${n}</button><button data-take="${key}" data-count="${n}" ${!usable||(b.storage?.[key]||0)<n?"disabled":""}>取 ${n}</button>`).join("")}</div></div>`).join("")}</div>`:""}<div class="home-actions">${b.type==="door"?`<button id="home-door" ${usable?"":"disabled"}>${b.open?"关门":"开门"}</button>`:""}${["floor","wall","door","roof"].includes(b.type)?`<button id="home-upgrade" ${usable&&owner&&level<3?"":"disabled"}>${level>=3?"已达强化 3 级":level===1?"升级石制 · 石材 8 木材 2":"升级强化 · 石材 12 晶石 4"}</button>`:""}<button id="home-back">返回家园</button></div>${owner&&online?`<h3>授权队友</h3><p>允许指定队友操作这座建筑的门和箱子；升级和回收仍限主人。</p>${(online.peers||[]).filter(p=>p.id!==game.player.id).map(p=>`<button data-home-peer="${escapeHtml(p.id)}">${(b.guests||[]).includes(p.id)?"撤销授权":"允许使用"} · ${escapeHtml(p.name||p.id.slice(0,8))}</button>`).join("")}`:""}`,"HOME");
   const action=(operation,item,amount,peerId)=>{
     const ok=act("building",{buildingId:id,operation,item,amount,peerId});events();save();
     openBuilding(id,online&&!online.host?"请求已发送，等待同步…":ok?"操作完成":"操作未完成：检查距离、权限、材料；箱子需取空，地板需先拆除上方建筑。");
   };
   if($("#home-door"))$("#home-door").onclick=()=>action("door");
   if($("#home-upgrade"))$("#home-upgrade").onclick=()=>action("upgrade");
-  $("#home-recycle").onclick=()=>action("recycle");$("#home-back").onclick=openHome;
+  $("#home-back").onclick=openHome;
   $$('[data-store]').forEach(el=>el.onclick=()=>action("store",el.dataset.store,Number(el.dataset.count)));
   $$('[data-take]').forEach(el=>el.onclick=()=>action("take",el.dataset.take,Number(el.dataset.count)));
   $$('[data-home-peer]').forEach(el=>el.onclick=()=>action("authorize",null,1,el.dataset.homePeer));
@@ -851,7 +847,18 @@ function hudUpdate() {
   const contextual = nearbyAction();
   const interaction = $("#touch-interact");
   interaction.hidden = !contextual || !!selectedBuild;
-  if (contextual) interaction.querySelector("small").textContent = contextual.label;
+  if (contextual) {
+    interaction.querySelector("small").textContent = contextual.label;
+    interaction.querySelector("i").innerHTML = icon(contextual.icon || "hand");
+    interaction.setAttribute("aria-label", contextual.label);
+  }
+  const recyclable = nearbyRecyclable();
+  const recycleButton = $("#touch-recycle");
+  recycleButton.hidden = !recyclable || !!selectedBuild;
+  if (recyclable && recycleArm.id !== recyclable.id) {
+    recycleArm = {id:null,until:0};
+    recycleButton.querySelector("small").textContent = "回收";
+  }
   const ammoKey = {bow:"arrow",pistol:"cell",shotgun:"shell"}[tool];
   $("#dock-weapon").textContent = ({sword:"剑",gather:"采集",bow:"弓",pistol:"手枪",shotgun:"喷子"}[tool] || "武器") + (ammoKey ? " · " + (game.ammo[ammoKey] || 0) : "") + " ▴";
   $("#interact-hint").hidden = !near || !!selectedBuild;
@@ -865,16 +872,34 @@ function hudUpdate() {
 }
 function nearbyAction() {
   const building=game.buildings.filter(b=>["door","chest"].includes(b.type)&&dist(b,game.player)<3.5).sort((a,b)=>dist(a,game.player)-dist(b,game.player))[0];
-  if(building?.type === "door") return {type:"door",label:building.open?"关门":"开门",id:building.id};
-  if(building) return {type:"home",label:"箱子",id:building.id};
-  if (game.player.mounted) return {type:"mount",label:"下车"};
-  if (game.buildings.some(b=>BUILDS[b.type]?.vehicle && b.durability>0 && dist(b,game.player)<3)) return {type:"mount",label:"上车"};
-  if (game.workbenchNearby()) return {type:"workbench",label:"制作"};
+  if(building?.type === "door") return {type:"door",label:building.open?"关门":"开门",icon:"hand",id:building.id};
+  if(building) return {type:"home",label:"打开箱子",icon:"bag",id:building.id};
+  if (game.player.mounted) return {type:"mount",label:"下车",icon:"wind"};
+  if (game.buildings.some(b=>BUILDS[b.type]?.vehicle && b.durability>0 && dist(b,game.player)<3)) return {type:"mount",label:"上车",icon:"wind"};
+  if (game.workbenchNearby()) return {type:"workbench",label:"制作",icon:"axe"};
   const n=game.nearest();
-  if (n?.kind === "node") return {type:"interact",label:"采集"};
-  if (n?.kind === "tent") return {type:"interact",label:"休息"};
-  if (n?.kind === "shrine") return {type:"interact",label:"唤醒"};
+  if (n?.kind === "node") return {type:"interact",label:"采集",icon:"axe"};
+  if (n?.kind === "tent") return {type:"interact",label:"休息",icon:"tent"};
+  if (n?.kind === "shrine") return {type:"interact",label:"唤醒",icon:"crystal"};
   return null;
+}
+let recycleArm = {id:null,until:0};
+function nearbyRecyclable() {
+  return game.buildings.filter(b=>!b.id.startsWith("home")&&game.ownsBuilding(b)&&dist(b,game.player)<3.8).sort((a,b)=>dist(a,game.player)-dist(b,game.player))[0] || null;
+}
+function recycleNearby() {
+  const b=nearbyRecyclable();
+  if(!b) return false;
+  if(recycleArm.id!==b.id || recycleArm.until<Date.now()) {
+    recycleArm={id:b.id,until:Date.now()+2200};
+    $("#touch-recycle small").textContent="确认";
+    toast(`再点一次回收${BUILDS[b.type].name}`);
+    return false;
+  }
+  recycleArm={id:null,until:0};
+  const ok=act("building",{buildingId:b.id,operation:"recycle"});events();save();
+  $("#touch-recycle small").textContent="回收";
+  return ok;
 }
 function useNearbyAction() {
   const action = nearbyAction();
@@ -1048,7 +1073,7 @@ window.addEventListener("keydown", (e) => {
       act("mount");
       break;
     case "KeyX":
-      act("recycle");
+      recycleNearby();
       break;
     case "KeyR":
       buildAngle += Math.PI / 4;
@@ -1155,6 +1180,7 @@ holdButton(
   useNearbyAction,
   () => {},
 );
+holdButton("#touch-recycle", recycleNearby, () => {});
 holdButton(
   "#touch-dash",
   () => {

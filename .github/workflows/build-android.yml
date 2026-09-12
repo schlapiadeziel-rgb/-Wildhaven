@@ -36,11 +36,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v101.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v102.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v101.apk
+          path: Wildhaven-v102.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -55,7 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.1
+          RELEASE_TAG: v1.4.2
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v101.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.1" --latest --notes "交互与建造体验更新：靠近门后点击互动即可直接开关，门的通行碰撞同步变化；木栅栏改为端点自动吸附，支持直线、45 度与转角连续铺设，并修复吸附后无法放置的问题；建造操作条缩小，减少对横屏视野的遮挡。使用固定正式签名，可直接覆盖 1.4.0 更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v102.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.2" --latest --notes "情境交互更新：靠近箱子后使用统一互动按钮直接打开，门、工作台、采集、遗迹和车辆会自动切换文字与图标；靠近自己的建筑时单独显示回收按钮，并增加二次确认防止误拆；移除建造和建筑详情中的重复回收入口，减少按钮堆叠和误触。可直接覆盖 1.4.1 更新。"

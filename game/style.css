@@ -845,6 +845,17 @@ kbd {
   width: 20px;
   height: 20px;
 }
+#touch-recycle {
+  left: 56px;
+  top: 3px;
+  width: 58px;
+  height: 42px;
+  padding: 3px 4px 12px;
+  border-radius: 18px;
+  background: #573e386e;
+  border-color: #e1b7a466;
+}
+#touch-recycle i { width:17px; height:17px; }
 #build-bar {
   position: absolute;
   bottom: 130px;
@@ -2473,7 +2484,7 @@ dialog::backdrop {
 /* Compact HUD v4: three entrances, with unobstructed central play space. */
 #compact-dock { position:absolute; left:50%; bottom:0; transform:translateX(-50%); display:flex; gap:6px; padding:5px; border:1px solid #c8d8ba45; border-radius:12px; background:#102e32e8; pointer-events:auto; }
 #compact-dock button { min-width:72px; min-height:44px; padding:6px 10px; color:#edf0cf; border:0; border-radius:8px; background:#24464b; font-size:13px; }
-.quickbar[hidden], .quick-group[hidden], #touch-interact[hidden] { display:none!important; }
+.quickbar[hidden], .quick-group[hidden], #touch-interact[hidden], #touch-recycle[hidden] { display:none!important; }
 .quickbar { bottom:60px!important; width:max-content; max-width:calc(100vw - 28px); padding:6px!important; }
 .quickbar button { width:58px!important; height:56px!important; }
 .quickbar button > span { display:block!important; max-width:58px; font-size:10px; line-height:1.2; letter-spacing:0; }
