@@ -21,14 +21,26 @@ jobs:
           gradle-version: '8.7'
       - name: Bundle game for offline play
         run: |
-          mkdir -p android/app/src/main/assets/assets
-          base64 --decode .github/game-assets.tar.gz.b64 | tar -xz -C android/app/src/main/assets
-      - run: gradle -p android :app:assembleDebug
-      - run: cp android/app/build/outputs/apk/debug/app-debug.apk Wildhaven-Home-Preview.apk
+          mkdir -p android/app/src/main/assets
+          cp -a game/. android/app/src/main/assets/
+      - name: Restore fixed release signing key
+        env:
+          WILDHAVEN_KEYSTORE_BASE64: ${{ secrets.WILDHAVEN_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$WILDHAVEN_KEYSTORE_BASE64"
+          printf '%s' "$WILDHAVEN_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/wildhaven-release.jks"
+      - name: Build signed release APK
+        env:
+          WILDHAVEN_KEYSTORE_PATH: ${{ runner.temp }}/wildhaven-release.jks
+          WILDHAVEN_STORE_PASSWORD: ${{ secrets.WILDHAVEN_STORE_PASSWORD }}
+          WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
+          WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
+        run: gradle -p android :app:assembleRelease
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v100.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Wildhaven-debug-apk
-          path: Wildhaven-Home-Preview.apk
+          name: Wildhaven-release-apk
+          path: Wildhaven-v100.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -38,12 +50,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Wildhaven-debug-apk
-      - name: Publish test APK
+          name: Wildhaven-release-apk
+      - name: Publish formal APK
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: home-preview-${{ github.run_number }}
+          RELEASE_TAG: v1.4.0
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-Home-Preview.apk --target "$RELEASE_SHA" --title "Wildhaven home building preview" --prerelease --notes "Separate application ID: installs alongside the previous Wildhaven app and does not migrate its save. Includes modular houses, storage, upgrades, decorations, home score and local camp preview. Model-level tests passed; Android touch, LAN and Bluetooth behavior still need physical-device verification. Debug signing remains unsuitable for guaranteed in-place upgrades."
+          gh release create "$RELEASE_TAG" Wildhaven-v100.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.0" --latest --notes "正式更新基线。包含模块化家园、箱子储物、建筑升级、装饰、家园评分与本地营地预览。使用固定正式签名，今后的正式版本可直接覆盖更新。此前安装过家园体验版的设备需要先卸载体验版一次；旧版霁野可以保留。离线功能可用，局域网与蓝牙联机仍需在不同安卓设备上继续实机验证。"

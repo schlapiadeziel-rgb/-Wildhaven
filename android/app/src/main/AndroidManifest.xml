@@ -7,7 +7,7 @@
   <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
   <application
     android:allowBackup="true"
-    android:label="霁野 · 家园体验版"
+    android:label="霁野 · Wildhaven"
     android:theme="@style/AppTheme"
     android:usesCleartextTraffic="false">
     <activity

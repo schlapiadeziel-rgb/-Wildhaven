@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#132d32" />
+    <meta
+      name="description"
+      content="霁野 Wildhaven：在会呼吸的岛屿中自由探索、采集、战斗与建造。支持手机横屏、电脑与最多 4 人在线合作。"
+    />
+    <title>霁野 · Wildhaven</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='16' width='64' height='64' fill='%23132d32'/%3E%3Cpath d='M32 7 51 32 32 57 13 32Z' fill='none' stroke='%23d5d5a7' stroke-width='3'/%3E%3Cpath d='m22 38 10-21 10 21-10-6Z' fill='%23d5d5a7'/%3E%3C/svg%3E"
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <canvas id="world" aria-label="霁野三维游戏世界"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <div id="rotate-notice">
+      <div class="rotate-symbol">▯</div>
+      <h2>横过来，去看更大的世界</h2>
+      <p>
+        请旋转手机或平板，用横屏开始旅程。<br />如果画面没有旋转，请关闭设备的竖排方向锁定。
+      </p>
+      <button id="rotate-fullscreen" class="primary">尝试全屏横屏</button>
+    </div>
+    <div id="loading">
+      <div class="emblem">◇</div>
+      <p>霁野</p>
+      <span id="loading-text">风正吹过岛屿…</span>
+    </div>
+    <div id="fatal" hidden>
+      <h2>暂时无法打开岛屿</h2>
+      <p id="fatal-message"></p>
+      <button onclick="location.reload()">重新加载</button>
+    </div>
+    <section id="welcome" hidden aria-label="开始游戏">
+      <div class="welcome-top">
+        <span class="wordmark"><b>◇</b> WILDHAVEN</span
+        ><span class="edition">一座岛屿，无数种生活</span>
+      </div>
+      <div class="welcome-content">
+        <div class="overline">AN OPEN-WORLD ADVENTURE</div>
+        <h1>霁野<span>风起处，自由生长。</span></h1>
+        <p class="intro">
+          走进森林，点亮遗迹。<br />或者，找一片喜欢的海岸，安一个家。
+        </p>
+        <div class="mode-options" role="group" aria-label="选择游戏模式">
+          <button class="mode selected" data-mode="adventure">
+            <span>远征</span><small>采集 · 战斗 · 唤醒古迹</small></button
+          ><button class="mode" data-mode="creative">
+            <span>漫游</span><small>无伤探索 · 自由建造</small>
+          </button>
+        </div>
+        <button id="start" class="primary start-button">
+          踏入荒野 <span>↗</span></button
+        ><button id="continue" class="continue-button" hidden>
+          继续上次的旅程 →
+        </button>
+        <button id="multiplayer" class="multiplayer-button">
+          ♧ 与朋友同行 <small>Wi-Fi / 蓝牙附近联机</small></button>
+        <div class="welcome-note">离线单人存档 · 附近设备共同远征</div>
+      </div>
+      <div class="welcome-bottom">
+        <span>戴上耳机，听见岛屿的呼吸</span
+        ><span>EXPLORE AT YOUR OWN PACE <i>✧</i></span>
+      </div>
+    </section>
+    <div id="hud" hidden>
+      <header class="hud-top">
+        <div class="brand-health">
+          <div class="small-brand">
+            <span class="brand-icon">◇</span>
+            <div>霁野 <small>WILDHAVEN</small></div>
+          </div>
+          <div class="vitals">
+            <div class="health-label">
+              <span id="level">旅人 · Lv.1</span
+              ><span id="health-text">120 / 120</span>
+            </div>
+            <div class="health-track"><i id="health-fill"></i></div>
+            <div class="stamina-track"><i id="stamina-fill"></i></div>
+          </div>
+        </div>
+        <div class="resources">
+          <span title="木材"
+            ><i data-icon="wood"></i><b id="wood-count">0</b></span
+          ><span title="石材"
+            ><i data-icon="stone"></i><b id="stone-count">0</b></span
+          ><span title="晶石"
+            ><i data-icon="crystal"></i><b id="crystal-count">0</b></span
+          >
+        </div>
+        <div id="global-status" hidden>
+          <b>积分 <span id="score-count">0</span></b>
+          <span class="tent-status" id="tent-timer">未建帐篷</span>
+        </div>
+        <div class="top-actions">
+          <button id="party" class="party-button" title="联机房间">
+            ♧ <span>联机</span></button
+          ><button
+            id="sound"
+            class="icon-button"
+            aria-label="切换声音"
+            title="声音"
+          ></button
+          ><button
+            id="pause"
+            class="icon-button"
+            aria-label="暂停与设置"
+            title="暂停 Esc"
+          ></button>
+        </div>
+      </header>
+      <aside class="quest-panel">
+        <div class="quest-eyebrow">
+          <span>岛屿手记</span><span id="day">第 1 天</span>
+        </div>
+        <h2 id="quest-title">让微光，再次醒来</h2>
+        <p id="quest-description">收集晶石，唤醒散落在岛上的三座遗迹。</p>
+        <div class="quest-dots" id="quest-dots">
+          <i></i><i></i><i></i><span id="quest-progress">0 / 3</span>
+        </div>
+        <button id="journal" class="text-button">
+          查看旅程 <span>↗</span>
+        </button>
+      </aside>
+      <aside class="map-panel">
+        <div class="location">
+          <i data-icon="compass"></i><span id="biome">风眠草甸</span>
+        </div>
+        <button id="map-button" aria-label="打开岛屿地图">
+          <canvas id="minimap" width="280" height="280"></canvas
+          ><span class="north">N</span><span class="map-key">地图 M</span>
+        </button>
+        <div class="weather">
+          <span id="time-icon">☀</span><span id="time">08:00</span
+          ><span id="weather-label">晴空 · 微风</span>
+        </div>
+      </aside>
+      <div id="discovery" aria-live="polite">
+        <small>发现新区域</small><strong></strong>
+      </div>
+      <div id="toasts" aria-live="polite"></div>
+      <div id="interact-hint" hidden><kbd>E</kbd><span></span></div>
+      <div class="camera-controls">
+        <button id="rotate-left" class="icon-button" aria-label="向左旋转视角">
+          ↶</button
+        ><button
+          id="rotate-right"
+          class="icon-button"
+          aria-label="向右旋转视角"
+        >
+          ↷</button
+        ><button id="zoom-in" class="icon-button" aria-label="拉近视角">
+          ＋</button
+        ><button id="zoom-out" class="icon-button" aria-label="拉远视角">
+          −
+        </button>
+      </div>
+      <footer class="hud-bottom">
+        <div class="control-legend">
+          <span><kbd>W A S D</kbd> 移动</span
+          ><span><kbd>空格</kbd> 挥剑 / 采集</span
+          ><span><kbd>E</kbd> 上下车</span><span><kbd>Shift</kbd> 闪避</span>
+        </div>
+        <nav id="compact-dock" aria-label="快捷操作"><button id="dock-weapon">武器</button><button id="dock-build">建造</button><button id="dock-bag">背包</button></nav>
+        <nav class="quickbar" aria-label="工具栏" hidden>
+          <div class="quick-group" data-label="武器">
+          <button data-action="sword" class="active">
+            <kbd>1</kbd><i data-icon="sword"></i><span>近战剑</span></button
+          ><button data-action="ranged" data-weapon="bow">
+            <kbd>3</kbd><i data-icon="wind"></i
+            ><span id="arrow-label">远距离弓 · 箭 0</span></button
+          ><button data-action="ranged" data-weapon="pistol">
+            <kbd>4</kbd><i data-icon="crystal"></i
+            ><span id="cell-label">快速手枪 · 弹 0</span></button
+          ><button data-action="ranged" data-weapon="shotgun">
+            <kbd>5</kbd><i data-icon="sun"></i
+            ><span id="shell-label">近战喷子 · 弹 0</span></button>
+          </div><div class="quick-group" data-label="建造">
+          <button data-action="build">
+            <kbd>B</kbd><i data-icon="build"></i><span>建造</span></button
+          ><button data-action="mount">
+            <kbd>F</kbd><i data-icon="wind"></i><span>骑乘</span></button
+          ><button data-action="recycle">
+            <kbd>X</kbd><i data-icon="build"></i><span>回收</span></button
+          ></div><div class="quick-group" data-label="背包">
+          <button data-action="interact">
+            <kbd>2</kbd><i data-icon="axe"></i><span>采集</span></button
+          ><button data-action="inventory">
+            <kbd>I</kbd><i data-icon="bag"></i><span>背包</span></button
+          ><button data-action="heal">
+            <kbd>Q</kbd><i data-icon="berry"></i
+            ><span id="berry-label">浆果 3</span>
+          </button></div>
+        </nav>
+        <div class="save-status">
+          <i></i><span id="save-status">自动保存</span>
+        </div>
+      </footer>
+      <div id="touch-controls">
+        <div id="joystick" aria-label="虚拟移动摇杆">
+          <div id="joystick-knob"></div>
+        </div>
+        <div class="touch-actions">
+          <button id="touch-dash" aria-label="闪避">
+            <i data-icon="wind"></i><small>闪避</small></button
+          ><button id="touch-attack" aria-label="挥剑或采集">
+            <i data-icon="sword"></i></button
+          ><button id="touch-interact" aria-label="上下风帆车">
+            <i data-icon="wind"></i><small>上下车</small>
+          </button>
+        </div>
+      </div>
+      <div id="build-bar" hidden>
+        <div>
+          <strong id="build-name">篝火</strong
+          ><span>移动选择位置 · R 旋转</span>
+        </div>
+        <button id="rotate-building" class="subtle">旋转</button>
+        <button id="place-build" class="primary">放置</button
+        ><button id="cancel-build" class="subtle">取消</button>
+      </div>
+    </div>
+    <dialog id="panel">
+      <div class="panel-heading">
+        <div>
+          <span id="panel-eyebrow" class="overline">WILDHAVEN</span>
+          <h2 id="panel-title"></h2>
+        </div>
+        <button id="close-panel" class="icon-button" aria-label="关闭">
+          ×
+        </button>
+      </div>
+      <div id="panel-content"></div>
+    </dialog>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

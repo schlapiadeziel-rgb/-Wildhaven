@@ -1,0 +1,10 @@
+{
+  "name": "霁野 Wildhaven",
+  "short_name": "霁野",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#132d32",
+  "theme_color": "#132d32",
+  "description": "可离线探索、在线合作的横屏开放世界游戏。"
+}

@@ -2,6 +2,14 @@ plugins {
   id 'com.android.application'
 }
 
+def signingEnvironment = [
+  keystorePath: System.getenv('WILDHAVEN_KEYSTORE_PATH'),
+  storePassword: System.getenv('WILDHAVEN_STORE_PASSWORD'),
+  keyAlias: System.getenv('WILDHAVEN_KEY_ALIAS'),
+  keyPassword: System.getenv('WILDHAVEN_KEY_PASSWORD')
+]
+def hasReleaseSigning = signingEnvironment.values().every { it != null && !it.isBlank() }
+
 android {
   namespace 'co.abeto.wildhaven'
   compileSdk 35
@@ -10,8 +18,36 @@ android {
     applicationId 'co.abeto.wildhaven.homepreview'
     minSdk 24
     targetSdk 35
-    versionCode 10
-    versionName '1.4.0-home'
+    versionCode 100
+    versionName '1.4.0'
+  }
+
+  signingConfigs {
+    release {
+      if (hasReleaseSigning) {
+        storeFile file(signingEnvironment.keystorePath)
+        storePassword signingEnvironment.storePassword
+        keyAlias signingEnvironment.keyAlias
+        keyPassword signingEnvironment.keyPassword
+      }
+    }
+  }
+
+  buildTypes {
+    release {
+      signingConfig signingConfigs.release
+      minifyEnabled false
+    }
+  }
+}
+
+tasks.configureEach { task ->
+  if (task.name == 'assembleRelease' || task.name == 'bundleRelease') {
+    task.doFirst {
+      if (!hasReleaseSigning) {
+        throw new GradleException('正式构建缺少 Wildhaven 固定签名环境变量。')
+      }
+    }
   }
 }
 
