@@ -30,7 +30,7 @@ export function installHome(Game, BUILDS, ITEMS, height, dist) {
     if (!isHome) {
       const all=this.buildings;
       this.buildings=all.filter(b=>!["floor","roof","rug"].includes(b.type));
-      try { return all.length<150 && base.can.call(this,type,x,z); } finally { this.buildings=all; }
+      try { return all.length<150 && base.can.call(this,type,x,z,angle); } finally { this.buildings=all; }
     }
     if(this.buildings.length>=150 || dist(this.player,{x,z})>8.5 || Math.hypot(x,z)>105 || height(x,z)<1) return false;
     // Existing beacon/relic exclusion and resource collision rules still apply.

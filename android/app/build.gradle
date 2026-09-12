@@ -18,8 +18,8 @@ android {
     applicationId 'co.abeto.wildhaven.homepreview'
     minSdk 24
     targetSdk 35
-    versionCode 100
-    versionName '1.4.0'
+    versionCode 101
+    versionName '1.4.1'
   }
 
   signingConfigs {

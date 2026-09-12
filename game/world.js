@@ -838,27 +838,18 @@ export class Game {
   }
   snapBuild(type, x, z, angle = 0) {
     if (type !== "fence") return { x, z, angle };
-    const near = this.buildings
-      .filter((b) => b.type === "fence")
-      .map((b) => ({ b, d: Math.hypot(x - b.x, z - b.z) }))
-      .filter((v) => v.d < 5)
-      .sort((a, b) => a.d - b.d)[0];
-    if (!near)
-      return { x, z, angle: (Math.round(angle / (Math.PI / 4)) * Math.PI) / 4 };
-    const a = near.b.angle || 0;
-    const localX = Math.cos(a) * (x - near.b.x) - Math.sin(a) * (z - near.b.z),
-      localZ = Math.sin(a) * (x - near.b.x) + Math.cos(a) * (z - near.b.z);
-    if (Math.abs(localX) > Math.abs(localZ))
-      return {
-        x: near.b.x + Math.cos(a) * Math.sign(localX || 1) * 2.85,
-        z: near.b.z - Math.sin(a) * Math.sign(localX || 1) * 2.85,
-        angle: a,
-      };
-    return {
-      x: near.b.x + Math.sin(a) * Math.sign(localZ || 1) * 2.85,
-      z: near.b.z + Math.cos(a) * Math.sign(localZ || 1) * 2.85,
-      angle: a,
-    };
+    const step = Math.PI / 4, half = 1.3;
+    angle = Math.round(angle / step) * step;
+    const endpoints = [];
+    for (const b of this.buildings.filter((b) => b.type === "fence")) {
+      const a = b.angle || 0, dx = Math.cos(a) * half, dz = -Math.sin(a) * half;
+      endpoints.push({x:b.x-dx,z:b.z-dz},{x:b.x+dx,z:b.z+dz});
+    }
+    const end = endpoints.map(p=>({...p,d:Math.hypot(x-p.x,z-p.z)})).filter(p=>p.d<2.8).sort((a,b)=>a.d-b.d)[0];
+    if (!end) return {x,z,angle};
+    const dx=Math.cos(angle)*half,dz=-Math.sin(angle)*half;
+    const side=(x-end.x)*dx+(z-end.z)*dz>=0?1:-1;
+    return {x:end.x+dx*side,z:end.z+dz*side,angle};
   }
   recycleNearest() {
     const list = this.buildings
@@ -979,7 +970,7 @@ export class Game {
     this.notify("帐篷保护时间延长 1 天", "good");
     return true;
   }
-  canBuild(type, x, z) {
+  canBuild(type, x, z, angle = 0) {
     if (
       !BUILDS[type] ||
       !Number.isFinite(x + z) ||
@@ -995,9 +986,12 @@ export class Game {
       return false;
     const r = BUILDS[type].radius;
     return (
-      !this.buildings.some(
-        (b) => dist(b, { x, z }) < r + BUILDS[b.type].radius + 0.3,
-      ) &&
+      !this.buildings.some((b) => {
+        const d=dist(b,{x,z});
+        // Fence segments may meet at an endpoint (including 45/90-degree corners).
+        if(type==="fence" && b.type==="fence") return d<0.5;
+        return d < r + BUILDS[b.type].radius + 0.3;
+      }) &&
       !this.world.nodes.some(
         (n) =>
           !n.down && dist(n, { x, z }) < r + (n.type === "wood" ? 0.8 : 0.5),

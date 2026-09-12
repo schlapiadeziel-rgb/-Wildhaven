@@ -36,11 +36,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v100.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v101.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v100.apk
+          path: Wildhaven-v101.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -55,7 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.0
+          RELEASE_TAG: v1.4.1
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v100.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.0" --latest --notes "正式更新基线。包含模块化家园、箱子储物、建筑升级、装饰、家园评分与本地营地预览。使用固定正式签名，今后的正式版本可直接覆盖更新。此前安装过家园体验版的设备需要先卸载体验版一次；旧版霁野可以保留。离线功能可用，局域网与蓝牙联机仍需在不同安卓设备上继续实机验证。"
+          gh release create "$RELEASE_TAG" Wildhaven-v101.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.1" --latest --notes "交互与建造体验更新：靠近门后点击互动即可直接开关，门的通行碰撞同步变化；木栅栏改为端点自动吸附，支持直线、45 度与转角连续铺设，并修复吸附后无法放置的问题；建造操作条缩小，减少对横屏视野的遮挡。使用固定正式签名，可直接覆盖 1.4.0 更新。"
