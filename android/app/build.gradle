@@ -7,11 +7,11 @@ android {
   compileSdk 35
 
   defaultConfig {
-    applicationId 'co.abeto.wildhaven'
+    applicationId 'co.abeto.wildhaven.homepreview'
     minSdk 24
     targetSdk 35
-    versionCode 9
-    versionName '1.3.4'
+    versionCode 10
+    versionName '1.4.0-home'
   }
 }
 

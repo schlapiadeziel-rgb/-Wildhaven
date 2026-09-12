@@ -24,11 +24,11 @@ jobs:
           mkdir -p android/app/src/main/assets/assets
           base64 --decode .github/game-assets.tar.gz.b64 | tar -xz -C android/app/src/main/assets
       - run: gradle -p android :app:assembleDebug
-      - run: cp android/app/build/outputs/apk/debug/app-debug.apk Wildhaven-debug.apk
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk Wildhaven-Home-Preview.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-debug-apk
-          path: Wildhaven-debug.apk
+          path: Wildhaven-Home-Preview.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -43,7 +43,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: android-test-${{ github.run_number }}
+          RELEASE_TAG: home-preview-${{ github.run_number }}
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-debug.apk --target "$RELEASE_SHA" --title "Wildhaven Android nearby multiplayer test" --prerelease --notes "Game assets are bundled for offline single-player. Experimental LAN and paired-device Bluetooth rooms are included. Nearby multiplayer requires permissions and physical-device testing before it can be considered stable."
+          gh release create "$RELEASE_TAG" Wildhaven-Home-Preview.apk --target "$RELEASE_SHA" --title "Wildhaven home building preview" --prerelease --notes "Separate application ID: installs alongside the previous Wildhaven app and does not migrate its save. Includes modular houses, storage, upgrades, decorations, home score and local camp preview. Model-level tests passed; Android touch, LAN and Bluetooth behavior still need physical-device verification. Debug signing remains unsuitable for guaranteed in-place upgrades."
