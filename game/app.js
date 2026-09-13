@@ -82,6 +82,7 @@ let game = new Game(),
   lastFrame = performance.now(),
   hudTimer = 0,
   saveTimer = 0,
+  saveWriteTimer = null,
   mapTimer = 0,
   saveFailed = false,
   backgrounded = false,
@@ -145,7 +146,7 @@ function events() {
     if (e.type === "shrine") save();
   }
 }
-function save() {
+function save(immediate = false) {
   if (!started) return;
   if (online) {
     $("#save-status").textContent = online.connected
@@ -153,9 +154,18 @@ function save() {
       : "正在重新连接";
     return;
   }
+  if (immediate !== true) {
+    clearTimeout(saveWriteTimer);
+    $("#save-status").textContent = "等待保存…";
+    saveWriteTimer = setTimeout(() => save(true), 700);
+    return;
+  }
+  clearTimeout(saveWriteTimer);
+  saveWriteTimer = null;
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(game.snapshot()));
-    saveData = game.snapshot();
+    const snapshot = game.snapshot();
+    localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
+    saveData = snapshot;
     $("#save-status").textContent = "旅程已保存";
     saveFailed = false;
   } catch {
@@ -426,6 +436,7 @@ function openBuild() {
         buildAngle = 0;
         view.setGhost(selectedBuild);
         $("#build-name").textContent = BUILDS[selectedBuild].name;
+        $("#build-status").textContent = buildMaterialStatus(selectedBuild);
         $("#rotate-building").textContent = selectedBuild === "fence" ? "旋转 45°" : "旋转 90°";
         $("#build-bar").hidden = false;
         closePanel();
@@ -438,6 +449,18 @@ function cancelBuild() {
   buildPoint = null;
   view.setGhost(null);
   $("#build-bar").hidden = true;
+}
+function buildMaterialStatus(type, validPosition = null) {
+  const cost = BUILDS[type]?.cost || {};
+  const materials = Object.entries(cost)
+    .map(([key, need]) => {
+      const owned = game.creative ? "∞" : game.inventory[key] || 0;
+      const enough = game.creative || Number(owned) >= need;
+      return `${ITEMS[key]} ${owned}/${need} ${enough ? "✓" : "✕"}`;
+    })
+    .join(" · ");
+  const place = validPosition === null ? "移动选位置" : validPosition ? "可以放置" : "位置冲突";
+  return `${place} · ${materials}`;
 }
 function openHome() {
   const score=game.homeScore();
@@ -567,7 +590,7 @@ function openPause() {
       leaveOnline();
       return;
     }
-    save();
+    save(true);
     closePanel();
     started = false;
     $("#hud").hidden = true;
@@ -1284,16 +1307,16 @@ window.addEventListener("blur", () => {
 document.addEventListener("visibilitychange", () => {
   backgrounded = document.hidden;
   if (backgrounded) {
-    save();
+    save(true);
     clearInput();
     audio.setPaused(true);
     if (started && !paused) openPause();
   } else lastFrame = performance.now();
 });
-window.addEventListener("pagehide", save);
+window.addEventListener("pagehide", () => save(true));
 $("#world").addEventListener("webglcontextlost", (e) => {
   e.preventDefault();
-  save();
+  save(true);
   paused = true;
   $("#fatal-message").textContent =
     "设备暂时中断了图形渲染。进度已尝试保存，请重新加载后继续旅程，并在设置中切换到流畅画质。";
@@ -1350,6 +1373,12 @@ function tick(now) {
         valid,
       );
       $("#place-build").disabled = !valid;
+      const status = buildMaterialStatus(
+        selectedBuild,
+        game.canBuild(selectedBuild, buildPoint.x, buildPoint.z, buildPoint.angle),
+      );
+      if ($("#build-status").textContent !== status)
+        $("#build-status").textContent = status;
     }
     events();
     saveTimer += dt;

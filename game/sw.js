@@ -1,4 +1,4 @@
-const CACHE='wildhaven-v3';
+const CACHE='wildhaven-v4';
 const ASSETS=['/','/index.html','/style.css','/app.js','/world.js','/scene.js','/audio.js','/online.js','/assets/three.module.min.js','/manifest.webmanifest'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
