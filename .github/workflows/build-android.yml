@@ -36,11 +36,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v104.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v105.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v104.apk
+          path: Wildhaven-v105.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -55,7 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.4
+          RELEASE_TAG: v1.4.5
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v104.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.4" --latest --notes "移动端深度性能更新：手机地形细分约减半、海水细分由 90 降至 32、地面装饰由 5600 降至 3200；远处敌人、建筑和火焰停止渲染与动画，减轻开放世界长时间运行压力；远程武器瞄准恢复为纯直线极光，移除射程终点光环。保留 1.4.3 的建造材料反馈与合并存档。可直接覆盖旧版更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v105.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.5" --latest --notes "岛屿事件与战斗反馈更新：新增晶石潮汐、丰饶之风、猎月时刻三种 90 秒随机事件，并在天气栏实时显示倒计时；事件会改变晶石、普通资源或敌人奖励，状态支持存档和联机同步；攻击命中新增漂浮伤害数字，并完善临时特效资源释放。可直接覆盖旧版更新。"

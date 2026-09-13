@@ -349,6 +349,8 @@ export class Game {
     this.nextSave = 8;
     this.restCD = 0;
     this.combo = 0;
+    this.worldEvent = null;
+    this.nextWorldEvent = 90;
     if (saved) this.restore(saved);
   }
   get creative() {
@@ -419,16 +421,21 @@ export class Game {
   defeatEnemy(e) {
     e.dead = true;
     this.stats.kills++;
-    this.inventory.crystal += e.boss ? 8 : 1;
+    const huntBonus = this.worldEvent?.type === "hunt" && !e.boss ? 1 : 0;
+    this.inventory.crystal += (e.boss ? 8 : 1) + huntBonus;
     this.inventory.berry += e.boss ? 5 : 1;
     this.addXP(e.boss ? 130 : 16);
-    this.addScore(e.boss ? 60 : 12, "击败敌人");
+    this.addScore(e.boss ? 60 : this.worldEvent?.type === "hunt" ? 24 : 12, "击败敌人");
     this.event("defeat", { id: e.id, x: e.x, z: e.z, boss: e.boss });
     if (e.boss) {
       this.won = true;
       this.notify("灯塔重燃！岛屿重新记起了光。", "good");
       this.event("victory");
-    } else this.notify("+1 晶石 · +1 浆果", "good");
+    } else
+      this.notify(
+        `${huntBonus ? "+2" : "+1"} 晶石 · +1 浆果${huntBonus ? " · 猎月奖励翻倍" : ""}`,
+        "good",
+      );
   }
   damagePlayer(target, damage) {
     if (
@@ -549,9 +556,13 @@ export class Game {
         this.notify("石斧损坏了，可在工作台重新制作", "bad");
       if (v.hp <= 0) {
         v.down = true;
-        const amount =
+        let amount =
           (v.type === "wood" ? 4 : v.type === "stone" ? 3 : 2) +
           (axeReady && v.type === "wood" ? 1 : 0);
+        if (this.worldEvent?.type === "crystal" && v.type === "crystal")
+          amount += 2;
+        if (this.worldEvent?.type === "harvest" && v.type !== "crystal")
+          amount += 1;
         this.inventory[v.type] += amount;
         this.stats.gathered += amount;
         this.addScore(
@@ -637,7 +648,7 @@ export class Game {
             this.tools.spear.durability - 1,
           );
         e.hitFlash = 0.18;
-        this.event("hit", { x: e.x, z: e.z, boss: e.boss });
+        this.event("hit", { x: e.x, z: e.z, boss: e.boss, amount: damage });
         if (e.hp <= 0) this.defeatEnemy(e);
       }
     }
@@ -715,11 +726,17 @@ export class Game {
         (Math.sin(p.angle) * (e.x - p.x) + Math.cos(p.angle) * (e.z - p.z)) /
         (d || 1);
       if (dot < spec.cone) continue;
-      e.hp -=
+      const dealt =
         spec.damage *
         (kind === "shotgun" ? Math.max(0.45, 1 - (d / spec.range) * 0.45) : 1);
+      e.hp -= dealt;
       e.hitFlash = 0.18;
-      this.event("hit", { x: e.x, z: e.z, boss: e.boss });
+      this.event("hit", {
+        x: e.x,
+        z: e.z,
+        boss: e.boss,
+        amount: Math.round(dealt),
+      });
       hits++;
       if (e.hp <= 0) this.defeatEnemy(e);
       if (kind !== "shotgun") break;
@@ -1040,6 +1057,41 @@ export class Game {
     p.x = x;
     p.z = z;
   }
+  updateWorldEvent(dt) {
+    if (this.creative) return;
+    if (this.worldEvent) {
+      this.worldEvent.remaining -= dt;
+      if (this.worldEvent.remaining <= 0) {
+        this.notify(`${this.worldEvent.name}已经平息`, "normal");
+        this.worldEvent = null;
+        this.nextWorldEvent = 150 + ((Math.floor(this.clock) * 17) % 90);
+      }
+      return;
+    }
+    this.nextWorldEvent -= dt;
+    if (this.nextWorldEvent > 0) return;
+    const events = [
+      {
+        type: "crystal",
+        name: "晶石潮汐",
+        text: "晶石潮汐出现：采集晶石额外获得 2 份",
+      },
+      {
+        type: "harvest",
+        name: "丰饶之风",
+        text: "丰饶之风吹过：木材、石材和浆果采集量 +1",
+      },
+      {
+        type: "hunt",
+        name: "猎月时刻",
+        text: "猎月时刻开始：击败普通敌人的晶石与积分奖励翻倍",
+      },
+    ];
+    const picked = events[Math.floor(this.clock / 37) % events.length];
+    this.worldEvent = { type: picked.type, name: picked.name, remaining: 90 };
+    this.notify(picked.text, "good");
+    this.event("world-event", { ...this.worldEvent });
+  }
   update(dt, input = { x: 0, z: 0 }) {
     dt = clamp(dt, 0, 0.05);
     const p = this.player;
@@ -1086,6 +1138,7 @@ export class Game {
       }
     }
     if (this.isGuest) return;
+    this.updateWorldEvent(dt);
     this.expireTents();
     for (const r of this.remotePlayers) {
       for (const k of [
@@ -1219,6 +1272,8 @@ export class Game {
       clock: this.clock,
       elapsed: this.elapsed,
       won: this.won,
+      worldEvent: this.worldEvent,
+      nextWorldEvent: this.nextWorldEvent,
       nodes: this.world.nodes.filter((n) => n.down).map((n) => n.id),
       enemies: this.world.enemies.filter((e) => e.dead).map((e) => e.id),
     };
@@ -1302,6 +1357,15 @@ export class Game {
     this.clock = Number.isFinite(s.clock) ? s.clock : 240;
     this.elapsed = Number.isFinite(s.elapsed) ? s.elapsed : 0;
     this.won = !!s.won;
+    this.worldEvent =
+      s.worldEvent && ["crystal", "harvest", "hunt"].includes(s.worldEvent.type)
+        ? {
+            type: s.worldEvent.type,
+            name: String(s.worldEvent.name || "岛屿异象").slice(0, 20),
+            remaining: clamp(Number(s.worldEvent.remaining) || 0, 0, 180),
+          }
+        : null;
+    this.nextWorldEvent = clamp(Number(s.nextWorldEvent) || 90, 15, 360);
     const down = new Set(s.nodes || []),
       dead = new Set(s.enemies || []);
     for (const n of this.world.nodes)

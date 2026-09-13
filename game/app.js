@@ -119,6 +119,8 @@ function toast(text, tone = "normal") {
 function events() {
   for (const e of game.events.splice(0)) {
     view.handle(e);
+    if (e.type === "hit" && e.amount)
+      view.damagePopup(e.x, e.z, e.amount);
     audio.play(e.type);
     if (e.type === "toast") { toast(e.text, e.tone); const status=$("#craft-status"); if(status) status.textContent=e.text; }
     if (e.type === "discovery") {
@@ -838,8 +840,14 @@ function hudUpdate() {
   $("#time").textContent =
     `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   $("#time-icon").textContent = h >= 6 && h < 18 ? "☀" : "☾";
-  $("#weather-label").textContent =
-    h >= 6 && h < 18 ? "晴空 · 微风" : "星夜 · 静谧";
+  if (game.worldEvent) {
+    const seconds = Math.max(0, Math.ceil(game.worldEvent.remaining));
+    $("#weather-label").textContent =
+      `${game.worldEvent.name} · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  } else {
+    $("#weather-label").textContent =
+      h >= 6 && h < 18 ? "晴空 · 微风" : "星夜 · 静谧";
+  }
   $("#day").textContent = `第 ${Math.floor(game.clock / 720) + 1} 天`;
   const n = game.shrines.filter(Boolean).length;
   $("#quest-progress").textContent = `${n} / 3`;
