@@ -36,11 +36,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v103.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v104.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v103.apk
+          path: Wildhaven-v104.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -55,7 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.3
+          RELEASE_TAG: v1.4.4
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v103.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.3" --latest --notes "移动端性能与建造反馈更新：降低手机渲染分辨率上限，减少普通画质下不必要的实例阴影；连续建造与操作改为合并存档，减少卡顿；建造预览实时显示位置是否有效及木材、石材、晶石的已有量与需求量。保留门、箱子、工作台、回收、围栏吸附与联机功能。可直接覆盖 1.4.2 更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v104.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.4" --latest --notes "移动端深度性能更新：手机地形细分约减半、海水细分由 90 降至 32、地面装饰由 5600 降至 3200；远处敌人、建筑和火焰停止渲染与动画，减轻开放世界长时间运行压力；远程武器瞄准恢复为纯直线极光，移除射程终点光环。保留 1.4.3 的建造材料反馈与合并存档。可直接覆盖旧版更新。"
