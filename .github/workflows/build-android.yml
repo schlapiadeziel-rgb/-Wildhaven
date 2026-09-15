@@ -36,11 +36,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v107.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v108.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v107.apk
+          path: Wildhaven-v108.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -55,7 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.7
+          RELEASE_TAG: v1.4.8
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v107.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.7" --latest --notes "房屋建造修复：墙和门支持清晰的横向与竖向放置；预览会优先吸附到已建地板的真实边缘与角点，旋转按钮和放置提示会显示当前方向。可直接覆盖旧版更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v108.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.8" --latest --notes "房屋建造进一步修复：墙和门的方向改为明确的横向／竖向切换；自动吸附不会再擅自改变玩家选择的方向。可直接覆盖旧版更新。"
