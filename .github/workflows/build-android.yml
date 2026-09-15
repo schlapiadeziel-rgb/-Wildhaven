@@ -36,11 +36,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v106.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v107.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v106.apk
+          path: Wildhaven-v107.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -55,7 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.6
+          RELEASE_TAG: v1.4.7
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v106.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.6" --latest --notes "探索内容更新：新增回声古树、潮痕洞口、霜光观测台三处手工地标；靠近即可发现并获得经验，发现进度会记录在手记与地图中，也会随存档保存。可直接覆盖旧版更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v107.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.7" --latest --notes "房屋建造修复：墙和门支持清晰的横向与竖向放置；预览会优先吸附到已建地板的真实边缘与角点，旋转按钮和放置提示会显示当前方向。可直接覆盖旧版更新。"

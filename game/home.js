@@ -14,14 +14,35 @@ export function installHome(Game, BUILDS, ITEMS, height, dist) {
   const mine = (g,b) => !b.owner || b.owner === (g.player.id || "local");
   const near = (g,b) => b && dist(g.player,b) <= 4.5;
   const floorsAt = (g,x,z) => g.buildings.filter(b=>b.type==="floor" && Math.abs(b.x-x)<=1.51 && Math.abs(b.z-z)<=1.51);
+  // Walls and doors are symmetrical every 180°.  Keeping only the two useful
+  // states prevents 180°/270° rotations from looking like a broken snap.
+  const edgeAngle = angle => ((Math.round(angle/(Math.PI/2)) % 2 + 2) % 2) * Math.PI/2;
   const base = {snap:Game.prototype.snapBuild,can:Game.prototype.canBuild,build:Game.prototype.build,move:Game.prototype.moveEntity,load:Game.prototype.load};
   Game.prototype.ownsBuilding = function(b) { return mine(this,b); };
   Game.prototype.canUseBuilding = function(b) { return mine(this,b) || (b.guests || []).includes(this.player.id); };
   Game.prototype.snapBuild = function(type,x,z,angle=0) {
     if (!structural(type)) return base.snap.call(this,type,x,z,angle);
-    angle = Math.round(angle/(Math.PI/2))*Math.PI/2;
-    const sideways = Math.abs(Math.sin(angle)) > .5;
-    const ox = edge(type) && sideways ? 1.5 : 0, oz = edge(type) && !sideways ? 1.5 : 0;
+    angle = edge(type) ? edgeAngle(angle) : Math.round(angle/(Math.PI/2))*Math.PI/2;
+    if (!edge(type)) return {x:Math.round(x/3)*3,z:Math.round(z/3)*3,angle};
+    // Pick a real floor edge, not just a mathematical grid. This makes the
+    // preview slide onto the closest side/corner, so a horizontal wall is as
+    // easy to place as a vertical one. Rotation remains the player's intent.
+    const choices=[];
+    for (const floor of this.buildings.filter(b=>b.type==="floor" && mine(this,b))) {
+      choices.push(
+        {x:floor.x,z:floor.z-1.5,angle:0}, {x:floor.x,z:floor.z+1.5,angle:0},
+        {x:floor.x-1.5,z:floor.z,angle:Math.PI/2}, {x:floor.x+1.5,z:floor.z,angle:Math.PI/2},
+      );
+    }
+    const matching=choices.filter(choice=>choice.angle===angle);
+    const pool=matching.length?matching:choices;
+    if (pool.length) return pool.reduce((best,choice)=>{
+      const d=(choice.x-x)**2+(choice.z-z)**2;
+      const bestD=(best.x-x)**2+(best.z-z)**2;
+      return d<bestD?choice:best;
+    });
+    const sideways = angle === Math.PI/2;
+    const ox = sideways ? 1.5 : 0, oz = sideways ? 0 : 1.5;
     return {x:Math.round((x-ox)/3)*3+ox,z:Math.round((z-oz)/3)*3+oz,angle};
   };
   Game.prototype.canBuild = function(type,x,z,angle=0) {

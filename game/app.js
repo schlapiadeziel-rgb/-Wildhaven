@@ -441,7 +441,7 @@ function openBuild() {
         view.setGhost(selectedBuild);
         $("#build-name").textContent = BUILDS[selectedBuild].name;
         $("#build-status").textContent = buildMaterialStatus(selectedBuild);
-        $("#rotate-building").textContent = selectedBuild === "fence" ? "旋转 45°" : "旋转 90°";
+        $("#rotate-building").textContent = selectedBuild === "fence" ? "旋转 45°" : ["wall","door"].includes(selectedBuild) ? "旋转 90° · 横向" : "旋转 90°";
         $("#build-bar").hidden = false;
         closePanel();
         toast("移动调整位置，绿色表示可以放置。");
@@ -454,7 +454,7 @@ function cancelBuild() {
   view.setGhost(null);
   $("#build-bar").hidden = true;
 }
-function buildMaterialStatus(type, validPosition = null) {
+function buildMaterialStatus(type, validPosition = null, angle = 0) {
   const cost = BUILDS[type]?.cost || {};
   const materials = Object.entries(cost)
     .map(([key, need]) => {
@@ -464,7 +464,10 @@ function buildMaterialStatus(type, validPosition = null) {
     })
     .join(" · ");
   const place = validPosition === null ? "移动选位置" : validPosition ? "可以放置" : "位置冲突";
-  return `${place} · ${materials}`;
+  const direction = ["wall", "door"].includes(type)
+    ? ` · ${Math.abs(Math.cos(angle)) > .5 ? "横向" : "竖向"}吸附`
+    : "";
+  return `${place}${direction} · ${materials}`;
 }
 function openHome() {
   const score=game.homeScore();
@@ -522,6 +525,10 @@ function placeBuild() {
 $("#place-build").onclick = placeBuild;
 function rotateBuilding() {
   buildAngle += selectedBuild === "fence" ? Math.PI / 4 : Math.PI / 2;
+  if (["wall", "door"].includes(selectedBuild)) {
+    const horizontal = Math.abs(Math.cos(buildAngle)) > .5;
+    $("#rotate-building").textContent = `旋转 90° · ${horizontal ? "横向" : "竖向"}`;
+  }
 }
 $("#rotate-building").onclick=rotateBuilding;
 $("#cancel-build").onclick = cancelBuild;
@@ -1393,6 +1400,7 @@ function tick(now) {
       const status = buildMaterialStatus(
         selectedBuild,
         game.canBuild(selectedBuild, buildPoint.x, buildPoint.z, buildPoint.angle),
+        buildPoint.angle,
       );
       if ($("#build-status").textContent !== status)
         $("#build-status").textContent = status;
