@@ -18,6 +18,13 @@ export const SHRINES = [
 ];
 export const HOME = { x: 0, z: 24 };
 export const BEACON = { x: 0, z: -8 };
+// These are deliberately hand-placed: unlike resource nodes, they give each
+// biome a memorable destination and a small reason to leave the main route.
+export const LANDMARKS = [
+  { id: "elder-root", x: -66, z: 20, name: "回声古树", detail: "密林深处，树根仍在低语。", color: 0x86d7a7 },
+  { id: "tide-cave", x: 58, z: 38, name: "潮痕洞口", detail: "退潮时才能看见的海岸裂隙。", color: 0x8fc9d2 },
+  { id: "frost-watch", x: -4, z: -66, name: "霜光观测台", detail: "旧时代旅人留下的观星石环。", color: 0xc4def3 },
+];
 export function currentQuest(game) {
   if (game.won) return { title: "主线已完成", detail: "探索岛屿，建造自己的营地", target: null };
   const remaining = SHRINES.filter((_, i) => !game.shrines[i]);
@@ -41,7 +48,7 @@ export function height(x, z) {
     Math.sin(x * 0.09 + z * 0.047) * 1.3 +
     Math.cos(x * 0.155 - z * 0.076) * 0.4 -
     Math.pow(r / 108, 6) * 12;
-  for (const s of [HOME, BEACON, ...SHRINES]) {
+  for (const s of [HOME, BEACON, ...SHRINES, ...LANDMARKS]) {
     let d = Math.hypot(s.x - x, s.z - z);
     if (d < 9) {
       let f = clamp(d / 9, 0, 1);
@@ -213,6 +220,7 @@ export function generateWorld() {
       dist({ x, z }, HOME) < 7 ||
       dist({ x, z }, BEACON) < 11 ||
       SHRINES.some((s) => dist({ x, z }, s) < 7)
+      || LANDMARKS.some((s) => dist({ x, z }, s) < 7)
     )
       continue;
     if (nodes.some((n) => Math.hypot(n.x - x, n.z - z) < 2.5)) continue;
@@ -341,6 +349,7 @@ export class Game {
     this.shrines = [false, false, false];
     this.stats = { gathered: 0, kills: 0, built: 0, recycled: 0 };
     this.discovered = ["meadow"];
+    this.landmarksFound = [];
     this.clock = 240;
     this.elapsed = 0;
     this.won = false;
@@ -1170,6 +1179,13 @@ export class Game {
       this.event("discovery", { name: b.name });
       this.addXP(15);
     }
+    for (const landmark of LANDMARKS) {
+      if (this.landmarksFound.includes(landmark.id) || dist(p, landmark) > 5)
+        continue;
+      this.landmarksFound.push(landmark.id);
+      this.addXP(24);
+      this.event("landmark", { name: landmark.name, detail: landmark.detail });
+    }
     for (const e of this.world.enemies) {
       if (e.dead || (e.boss && !this.shrines.every(Boolean))) continue;
       e.hitFlash = Math.max(0, e.hitFlash - dt);
@@ -1269,6 +1285,7 @@ export class Game {
       shrines: this.shrines,
       stats: this.stats,
       discovered: this.discovered,
+      landmarksFound: this.landmarksFound,
       clock: this.clock,
       elapsed: this.elapsed,
       won: this.won,
@@ -1354,6 +1371,9 @@ export class Game {
           ["meadow", "frost", "forest", "amber"].includes(d),
         )
       : ["meadow"];
+    this.landmarksFound = Array.isArray(s.landmarksFound)
+      ? s.landmarksFound.filter((id) => LANDMARKS.some((landmark) => landmark.id === id))
+      : [];
     this.clock = Number.isFinite(s.clock) ? s.clock : 240;
     this.elapsed = Number.isFinite(s.elapsed) ? s.elapsed : 0;
     this.won = !!s.won;

@@ -7,6 +7,7 @@ import {
   SHRINES,
   HOME,
   BEACON,
+  LANDMARKS,
   height,
   biome,
   clamp,
@@ -123,8 +124,9 @@ function events() {
       view.damagePopup(e.x, e.z, e.amount);
     audio.play(e.type);
     if (e.type === "toast") { toast(e.text, e.tone); const status=$("#craft-status"); if(status) status.textContent=e.text; }
-    if (e.type === "discovery") {
+    if (e.type === "discovery" || e.type === "landmark") {
       const el = $("#discovery");
+      el.querySelector("small").textContent = e.type === "landmark" ? "发现地标" : "发现新区域";
       el.querySelector("strong").textContent = e.name;
       el.classList.add("show");
       clearTimeout(events.discoveryTimer);
@@ -550,7 +552,7 @@ function openJournal() {
   ];
   setPanel(
     "岛屿手记",
-    `<div class="stats-row"><div><strong>${game.discovered.length}/4</strong><span>发现的区域</span></div><div><strong>${game.stats.built}</strong><span>建造的建筑</span></div><div><strong>${Math.floor(game.elapsed / 60)}</strong><span>旅程分钟</span></div></div><div class="journey-list">${quests.map((q) => `<div class="journey-item ${q.done ? "complete" : ""}"><i>${q.done ? "✧" : "◇"}</i><div><h3>${q.title}</h3><p>${q.text}</p></div></div>`).join("")}</div><p class="panel-intro" style="margin-top:18px;margin-bottom:0;font-size:12px">没有必须遵循的顺序。你可以随时离开道路，去任何感兴趣的地方。</p>`,
+    `<div class="stats-row"><div><strong>${game.discovered.length}/4</strong><span>发现的区域</span></div><div><strong>${game.landmarksFound.length}/3</strong><span>寻访的地标</span></div><div><strong>${Math.floor(game.elapsed / 60)}</strong><span>旅程分钟</span></div></div><div class="journey-list">${quests.map((q) => `<div class="journey-item ${q.done ? "complete" : ""}"><i>${q.done ? "✧" : "◇"}</i><div><h3>${q.title}</h3><p>${q.text}</p></div></div>`).join("")}</div><p class="panel-intro" style="margin-top:18px;margin-bottom:0;font-size:12px">没有必须遵循的顺序。你可以随时离开道路，去任何感兴趣的地方。</p>`,
     "YOUR JOURNEY",
   );
 }
@@ -744,6 +746,13 @@ function drawMap(canvas, full = false) {
       ctx.fillText(s.name, p.x, p.y + 19);
     }
   });
+  if (full) for (const landmark of LANDMARKS) {
+    const p = map(landmark);
+    ctx.fillStyle = game.landmarksFound.includes(landmark.id) ? "#f0e7b7" : "#c5d3bf";
+    ctx.beginPath(); ctx.moveTo(p.x, p.y-5); ctx.lineTo(p.x+4, p.y+4); ctx.lineTo(p.x-4, p.y+4); ctx.closePath(); ctx.fill();
+    ctx.font = `${w * 0.017}px sans-serif`; ctx.textAlign = "center"; ctx.fillStyle = "#e7e6c6";
+    ctx.fillText(landmark.name, p.x, p.y + 16);
+  }
   for (const b of game.buildings) {
     if (b.type !== "tent") continue;
     const p = map(b);
