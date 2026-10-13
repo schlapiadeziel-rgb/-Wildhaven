@@ -43,11 +43,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v111.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v112.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v111.apk
+          path: Wildhaven-v112.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -62,7 +62,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.11
+          RELEASE_TAG: v1.4.12
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v111.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.11" --latest --notes "移动端流畅度更新：低端安卓机会自动启用流畅画质；流畅档降低渲染分辨率、关闭阴影并限制粒子数量，减少发热和掉帧。均衡／高清档仍可在设置中切换。附近 Wi-Fi／蓝牙联机和离线单机保持可用。可直接覆盖旧版更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v112.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.12" --latest --notes "修复附近伙伴刚加入时第一次建造或攻击被忽略的问题；回收篝火时同步清理动画引用，避免重复建造后资源持续累积。保留离线单机、Wi-Fi 与蓝牙附近联机。"

@@ -41,3 +41,14 @@ test('nearby host publishes its own position and keeps room membership within fo
   assert.equal(state.players.some(peer => peer.id === 'guest-overflow'), false);
   assert.equal(peers.length, 4);
 });
+
+ test('first guest action runs after its actor is created', t => {
+  installBridge(t);
+  const order = [];
+  const room = new LocalRoom({host:true,playerId:'host',name:'host'}, {
+    peers: () => order.push('peers'),
+    action: () => order.push('action'),
+  });
+  room.receive(JSON.stringify({kind:'update',sender:'guest',position:{x:1,z:2},actions:[{type:'build'}]}));
+  assert.deepEqual(order,['peers','action']);
+});
