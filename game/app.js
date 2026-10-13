@@ -454,7 +454,7 @@ function cancelBuild() {
   view.setGhost(null);
   $("#build-bar").hidden = true;
 }
-function buildMaterialStatus(type, validPosition = null, angle = 0) {
+function buildMaterialStatus(type, validPosition = null, angle = 0, reason = "") {
   const cost = BUILDS[type]?.cost || {};
   const materials = Object.entries(cost)
     .map(([key, need]) => {
@@ -463,7 +463,7 @@ function buildMaterialStatus(type, validPosition = null, angle = 0) {
       return `${ITEMS[key]} ${owned}/${need} ${enough ? "✓" : "✕"}`;
     })
     .join(" · ");
-  const place = validPosition === null ? "移动选位置" : validPosition ? "可以放置" : "位置冲突";
+  const place = validPosition === null ? "移动选位置" : validPosition ? "可以放置" : reason || "位置冲突";
   const direction = ["wall", "door"].includes(type)
     ? ` · ${Math.abs(Math.cos(angle)) > .5 ? "横向" : "竖向"}吸附`
     : "";
@@ -1411,6 +1411,7 @@ function tick(now) {
         selectedBuild,
         game.canBuild(selectedBuild, buildPoint.x, buildPoint.z, buildPoint.angle),
         buildPoint.angle,
+        game.buildReason?.(selectedBuild, buildPoint.x, buildPoint.z, buildPoint.angle),
       );
       if ($("#build-status").textContent !== status)
         $("#build-status").textContent = status;

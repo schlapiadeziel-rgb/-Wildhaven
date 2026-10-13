@@ -26,6 +26,14 @@ export function installHome(Game, BUILDS, ITEMS, height, dist) {
   const base = {snap:Game.prototype.snapBuild,can:Game.prototype.canBuild,build:Game.prototype.build,move:Game.prototype.moveEntity,load:Game.prototype.load};
   Game.prototype.ownsBuilding = function(b) { return mine(this,b); };
   Game.prototype.canUseBuilding = function(b) { return mine(this,b) || (b.guests || []).includes(this.player.id); };
+  Game.prototype.buildReason = function(type,x,z,angle=0) {
+    if (!["wall","door"].includes(type)) return "";
+    if (!edgeSupportedBy(this,x,z,angle)) return "先铺地板，再把预览移到对应边缘";
+    const occupied=this.buildings.some(b=>edge(b.type)&&dist(b,{x,z})<.2);
+    if (occupied) return "这条地板边已被墙或门占用";
+    if (this.canBuild(type,x,z,angle)) return "";
+    return "位置被资源或地形挡住，换一条边试试";
+  };
   Game.prototype.snapBuild = function(type,x,z,angle=0) {
     if (!structural(type)) return base.snap.call(this,type,x,z,angle);
     angle = edge(type) ? edgeAngle(angle) : Math.round(angle/(Math.PI/2))*Math.PI/2;

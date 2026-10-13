@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['android/**', '.github/workflows/build-android.yml']
+    paths: ['game/**', 'android/**', 'tests/**', '.github/workflows/build-android.yml']
 permissions:
   contents: read
 jobs:
@@ -16,6 +16,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify game rules
+        run: |
+          node --test tests/game.test.mjs
+          node tests/home.mjs
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
@@ -36,11 +43,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v108.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v109.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v108.apk
+          path: Wildhaven-v109.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -55,7 +62,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.8
+          RELEASE_TAG: v1.4.9
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v108.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.8" --latest --notes "房屋建造进一步修复：墙和门的方向改为明确的横向／竖向切换；自动吸附不会再擅自改变玩家选择的方向。可直接覆盖旧版更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v109.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.9" --latest --notes "建造体验修复：墙和门放置失败会明确提示原因；横向／竖向方向保持锁定。发布前会自动验证核心游戏与家园建造规则。可直接覆盖旧版更新。"

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {Game,BUILDS} from '../public/world.js';
+import {Game,BUILDS} from '../game/world.js';
 const g=new Game();g.world.nodes=[];g.buildings=[];g.player.x=30;g.player.z=30;g.inventory={wood:999,stone:999,crystal:999,berry:999};
 assert.equal(g.build('wall',30,31.5),false,'walls require a floor');
 assert.equal(g.build('floor',30,30),true);
@@ -7,6 +7,8 @@ assert.equal(g.build('floor',30,30),false,'no duplicate floors');
 const horizontal=g.snapBuild('wall',30.2,31.3,0),vertical=g.snapBuild('wall',31.3,30.2,Math.PI/2);
 assert.deepEqual(horizontal,{x:30,z:31.5,angle:0},'horizontal wall snaps to a north/south floor edge');
 assert.deepEqual(vertical,{x:31.5,z:30,angle:Math.PI/2},'vertical wall snaps to an east/west floor edge');
+assert.equal(g.buildReason('wall',horizontal.x,horizontal.z,horizontal.angle),'','horizontal wall reports no placement problem');
+assert.equal(g.buildReason('wall',vertical.x,vertical.z,vertical.angle),'','vertical wall reports no placement problem');
 for(const [type,x,z,a] of [['door',30,31.5,0],['wall',30,28.5,0],['wall',31.5,30,Math.PI/2],['wall',28.5,30,Math.PI/2],['roof',30,30,0]])assert.equal(g.build(type,x,z,a),true,`${type} can attach`);
 assert.equal(g.homeScore().rooms,1);
 const floor=g.buildings.find(b=>b.type==='floor'),door=g.buildings.find(b=>b.type==='door');
