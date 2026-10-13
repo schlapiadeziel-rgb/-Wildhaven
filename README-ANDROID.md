@@ -1,6 +1,6 @@
 # 霁野 · Wildhaven Android 版
 
-[下载最新版 APK](https://github.com/schlapiadeziel-rgb/-Wildhaven/releases/latest/download/Wildhaven-v110.apk)
+[下载最新版 APK](https://github.com/schlapiadeziel-rgb/-Wildhaven/releases/latest/download/Wildhaven-v111.apk)
 
 这是内置完整游戏资源的 Android 横屏版：首次安装后可离线单人游玩，不需要持续联网。
 

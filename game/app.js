@@ -260,6 +260,11 @@ function resetView(next) {
   game = next;
   view = new ViewClass($("#world"), game);
   if (settings.quality) view.setQuality(settings.quality);
+  else if (matchMedia("(pointer:coarse)").matches && Number(navigator.deviceMemory || 8) <= 4) {
+    settings.quality = "low";
+    view.setQuality("low");
+    saveSettings();
+  }
 }
 let ViewClass;
 async function begin(resume = false) {
@@ -1442,6 +1447,11 @@ async function init() {
     ViewClass = mod.WorldView;
     view = new ViewClass($("#world"), game);
     if (settings.quality) view.setQuality(settings.quality);
+    else if (matchMedia("(pointer:coarse)").matches && Number(navigator.deviceMemory || 8) <= 4) {
+      settings.quality = "low";
+      view.setQuality("low");
+      saveSettings();
+    }
     terrainMap = makeMap();
     const boss = document.createElement("div");
     boss.className = "boss-hud";
