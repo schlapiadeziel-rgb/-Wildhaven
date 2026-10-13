@@ -21,7 +21,7 @@ jobs:
           node-version: '22'
       - name: Verify game rules
         run: |
-          node --test tests/game.test.mjs
+          node --test tests/game.test.mjs tests/local-room.test.mjs
           node tests/home.mjs
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -43,11 +43,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v109.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v110.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v109.apk
+          path: Wildhaven-v110.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -62,7 +62,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.9
+          RELEASE_TAG: v1.4.10
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v109.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.9" --latest --notes "建造体验修复：墙和门放置失败会明确提示原因；横向／竖向方向保持锁定。发布前会自动验证核心游戏与家园建造规则。可直接覆盖旧版更新。"
+          gh release create "$RELEASE_TAG" Wildhaven-v110.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.10" --latest --notes "附近联机稳定性更新：Wi-Fi／蓝牙主机会实时发布自身位置，附近房间严格限制最多 4 人，并会自动清理掉线伙伴。此包内置单机离线游戏；同一 Wi-Fi 或已配对蓝牙设备可直接本地联机。可直接覆盖旧版更新。"

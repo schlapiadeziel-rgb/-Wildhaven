@@ -1,11 +1,17 @@
-# 霁野 Android 测试版
+# 霁野 · Wildhaven Android 版
 
-[下载 APK](https://github.com/schlapiadeziel-rgb/-Wildhaven/releases/download/android-test-1/Wildhaven-debug.apk)
+[下载最新版 APK](https://github.com/schlapiadeziel-rgb/-Wildhaven/releases/latest/download/Wildhaven-v110.apk)
 
-[发布页面](https://github.com/schlapiadeziel-rgb/-Wildhaven/releases/tag/android-test-1)
+这是内置完整游戏资源的 Android 横屏版：首次安装后可离线单人游玩，不需要持续联网。
 
-2026-09-08：GitHub Actions 编译与发布成功，APK 下载及压缩包完整性检查通过。尚未完成 Android 真机安装、操作或多人联机测试。
+## 附近多人
 
-本版适用于 Android 7.0 及以上，横屏显示，通过 WebView 联网加载现有游戏网站。游戏资源没有内置，不能离线玩；蓝牙联机尚未实现。新版紧凑界面尚未随此包内置。
+- **同一 Wi-Fi**：一台设备在游戏内创建 Wi-Fi 房间，其他设备输入主机显示的局域网地址加入。
+- **蓝牙**：先在 Android 系统设置内完成设备配对；主机创建蓝牙房间，其他设备从已配对设备列表选择主机加入。
+- 附近房间最多 4 人。主机离开后，本地房间会结束；可重新创建。
 
-这是 debug 签名测试包；后续稳定版需要固定签名，可能无法直接覆盖此测试版。iPhone/iPad 不能安装 APK。
+Android 12 及以上首次使用蓝牙时需要允许附近设备权限。iPhone/iPad 不能安装 APK。
+
+## 更新
+
+游戏设置内的“检查更新”会跳转到 GitHub Release。新包使用固定签名，正常情况下可直接覆盖安装旧版；若系统提示签名冲突，需要先卸载旧的非正式测试包再安装。
