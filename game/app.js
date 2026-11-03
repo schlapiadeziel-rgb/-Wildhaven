@@ -15,6 +15,7 @@ import {
 } from "./world.js";
 import { OnlineRoom, LocalRoom } from "./online.js";
 import { IslandAudio } from "./audio.js";
+import { nextBuildAngle, quantizeFenceAngle } from "./placement.js";
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)];
 const ICONS = {
@@ -446,10 +447,11 @@ function openBuild() {
         view.setGhost(selectedBuild);
         $("#build-name").textContent = BUILDS[selectedBuild].name;
         $("#build-status").textContent = buildMaterialStatus(selectedBuild);
-        $("#rotate-building").textContent = selectedBuild === "fence" ? "旋转 45°" : ["wall","door"].includes(selectedBuild) ? "切换方向 · 横向" : "旋转 90°";
+        $("#rotate-building").textContent = "旋转";
+        $("#rotate-building").setAttribute("aria-label", "旋转建筑，快捷键 R");
         $("#build-bar").hidden = false;
         closePanel();
-        toast("移动调整位置，绿色表示可以放置。");
+        toast("移动调整位置。绿色可以放置，点「旋转」或按 R 改变方向。");
       }),
   );
 }
@@ -459,7 +461,14 @@ function cancelBuild() {
   view.setGhost(null);
   $("#build-bar").hidden = true;
 }
-function buildMaterialStatus(type, validPosition = null, angle = 0, reason = "") {
+function directionText(type, angle = 0) {
+  if (["wall", "door"].includes(type))
+    return Math.abs(Math.cos(angle || 0)) > 0.5 ? "横向" : "竖向";
+  if (type === "fence")
+    return `${Math.round((quantizeFenceAngle(angle) * 180) / Math.PI)}°`;
+  return "";
+}
+function buildMaterialStatus(type, validPosition = null, angle = 0, reason = "", snapped = false) {
   const cost = BUILDS[type]?.cost || {};
   const materials = Object.entries(cost)
     .map(([key, need]) => {
@@ -469,10 +478,8 @@ function buildMaterialStatus(type, validPosition = null, angle = 0, reason = "")
     })
     .join(" · ");
   const place = validPosition === null ? "移动选位置" : validPosition ? "可以放置" : reason || "位置冲突";
-  const direction = ["wall", "door"].includes(type)
-    ? ` · ${Math.abs(Math.cos(angle)) > .5 ? "横向" : "竖向"}吸附`
-    : "";
-  return `${place}${direction} · ${materials}`;
+  const facing = directionText(type, angle);
+  return `${place}${facing ? ` · ${facing}` : ""}${snapped ? " · 已吸附" : ""} · ${materials}`;
 }
 function openHome() {
   const score=game.homeScore();
@@ -529,21 +536,17 @@ function placeBuild() {
 }
 $("#place-build").onclick = placeBuild;
 function rotateBuilding() {
-  if (["wall", "door"].includes(selectedBuild)) {
-    // Walls only have two useful states.  Keep this as a direct toggle rather
-    // than accumulating rotations, so the button always does exactly what its
-    // label says on both touch and keyboard controls.
-    buildAngle = Math.abs(Math.cos(buildAngle)) > .5 ? Math.PI / 2 : 0;
-    const horizontal = Math.abs(Math.cos(buildAngle)) > .5;
-    $("#rotate-building").textContent = `切换方向 · ${horizontal ? "横向" : "竖向"}`;
-    toast(`已切换为${horizontal ? "横向" : "竖向"}吸附`);
-    return;
-  }
-  buildAngle += selectedBuild === "fence" ? Math.PI / 4 : Math.PI / 2;
-  if (["wall", "door"].includes(selectedBuild)) {
-    const horizontal = Math.abs(Math.cos(buildAngle)) > .5;
-    $("#rotate-building").textContent = `切换方向 · ${horizontal ? "横向" : "竖向"}`;
-  }
+  if (!selectedBuild) return;
+  buildAngle = nextBuildAngle(selectedBuild, buildAngle);
+  const facing = directionText(selectedBuild, buildAngle);
+  const button = $("#rotate-building");
+  button.textContent = "旋转";
+  button.setAttribute(
+    "aria-label",
+    facing ? `旋转建筑，当前${facing}，快捷键 R` : "旋转建筑，快捷键 R",
+  );
+  if (facing)
+    toast(selectedBuild === "fence" ? `围栏朝向 ${facing}` : `已切换为${facing}`);
 }
 $("#rotate-building").onclick=rotateBuilding;
 $("#cancel-build").onclick = cancelBuild;
@@ -1138,7 +1141,13 @@ window.addEventListener("keydown", (e) => {
       recycleNearby();
       break;
     case "KeyR":
-      if (selectedBuild) rotateBuilding();
+      if (
+        selectedBuild &&
+        !["INPUT", "TEXTAREA"].includes(e.target?.tagName)
+      ) {
+        rotateBuilding();
+        e.preventDefault();
+      }
       break;
     case "Digit1":
       equip("sword");
@@ -1392,16 +1401,17 @@ function tick(now) {
       act("attack");
     game.update(dt, movement);
     if (selectedBuild) {
-      buildPoint = {
+      const aim = {
         x: game.player.x + Math.sin(game.player.angle) * 4.4,
         z: game.player.z + Math.cos(game.player.angle) * 4.4,
       };
-        buildPoint = game.snapBuild(
-          selectedBuild,
-          buildPoint.x,
-          buildPoint.z,
-          buildAngle,
-        );
+      buildPoint = game.snapBuild(
+        selectedBuild,
+        aim.x,
+        aim.z,
+        buildAngle,
+      );
+      const snapped = Math.hypot(buildPoint.x - aim.x, buildPoint.z - aim.z) > 0.15;
       const valid =
         game.canBuild(selectedBuild, buildPoint.x, buildPoint.z, buildPoint.angle) &&
         game.afford(BUILDS[selectedBuild].cost);
@@ -1417,6 +1427,7 @@ function tick(now) {
         game.canBuild(selectedBuild, buildPoint.x, buildPoint.z, buildPoint.angle),
         buildPoint.angle,
         game.buildReason?.(selectedBuild, buildPoint.x, buildPoint.z, buildPoint.angle),
+        snapped,
       );
       if ($("#build-status").textContent !== status)
         $("#build-status").textContent = status;

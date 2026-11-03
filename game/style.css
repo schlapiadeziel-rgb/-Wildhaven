@@ -2533,5 +2533,17 @@ dialog::backdrop {
 .home-actions button { min-height:46px; border-radius:9px; font-size:14px; }
 .home-actions #home-door { grid-column:1/-1; background:#dce6b0; color:#14363a; font-weight:700; }
 @media(max-height:500px) {
-  #build-bar { width:min(470px,calc(100vw - 220px))!important; bottom:56px!important; }
+  #build-bar { width:min(560px,calc(100vw - 20px))!important; bottom:56px!important; }
 }
+#build-bar { z-index:6; width:min(560px,calc(100vw - 20px))!important; }
+#build-bar #rotate-building {
+  flex:0 0 auto;
+  min-width:84px!important;
+  min-height:48px!important;
+  padding:10px 16px!important;
+  font-size:16px!important;
+  font-weight:650;
+  white-space:nowrap;
+  touch-action:manipulation;
+}
+#build-bar button { flex:0 0 auto; touch-action:manipulation; }

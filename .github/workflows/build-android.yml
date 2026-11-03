@@ -43,11 +43,11 @@ jobs:
           WILDHAVEN_KEY_ALIAS: ${{ secrets.WILDHAVEN_KEY_ALIAS }}
           WILDHAVEN_KEY_PASSWORD: ${{ secrets.WILDHAVEN_KEY_PASSWORD }}
         run: gradle -p android :app:assembleRelease
-      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v112.apk
+      - run: cp android/app/build/outputs/apk/release/app-release.apk Wildhaven-v113.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Wildhaven-release-apk
-          path: Wildhaven-v112.apk
+          path: Wildhaven-v113.apk
           if-no-files-found: error
   publish:
     needs: build
@@ -62,7 +62,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: v1.4.12
+          RELEASE_TAG: v1.4.13
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          gh release create "$RELEASE_TAG" Wildhaven-v112.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.12" --latest --notes "修复附近伙伴刚加入时第一次建造或攻击被忽略的问题；回收篝火时同步清理动画引用，避免重复建造后资源持续累积。保留离线单机、Wi-Fi 与蓝牙附近联机。"
+          gh release create "$RELEASE_TAG" Wildhaven-v113.apk --target "$RELEASE_SHA" --title "霁野 · Wildhaven 1.4.13" --latest --notes "墙和围栏可以旋转：围栏每 45° 一档，墙和门在横向与竖向之间切换。手机点建造栏的「旋转」，电脑按 R。旋转后的围栏会按端点、转角和网格吸附，并与墙、门对齐；预览显示吸附后的朝向。碰撞、回收和旧存档兼容。保留离线单机、Wi-Fi 与蓝牙附近联机。"

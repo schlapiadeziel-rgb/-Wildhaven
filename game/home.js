@@ -2,7 +2,7 @@
 export function installHome(Game, BUILDS, ITEMS, height, dist) {
   Object.assign(BUILDS, {
     floor: {name:"木地板",description:"3 米方格自动对齐，房屋的基础。",icon:"build",cost:{wood:4},radius:1.5,maxDurability:180,home:true},
-    wall: {name:"房屋墙",description:"吸附地板边缘，阻挡人物和敌人。",icon:"fence",cost:{wood:5,stone:1},radius:1.5,maxDurability:220,home:true},
+    wall: {name:"房屋墙",description:"贴在地板边缘，可切换横向或竖向。",icon:"fence",cost:{wood:5,stone:1},radius:1.5,maxDurability:220,home:true},
     door: {name:"门框与门",description:"吸附地板边缘，主人或授权队友可开关。",icon:"build",cost:{wood:5,stone:2},radius:1.5,maxDurability:180,home:true},
     roof: {name:"屋顶",description:"放在地板上方；走入屋内时自动变淡。",icon:"tent",cost:{wood:6,stone:2},radius:1.5,maxDurability:180,home:true},
     chest: {name:"储物箱",description:"最多存放 200 份材料；回收前需取空。",icon:"bag",cost:{wood:8,stone:2},radius:.75,maxDurability:140,home:true},
@@ -36,26 +36,25 @@ export function installHome(Game, BUILDS, ITEMS, height, dist) {
   };
   Game.prototype.snapBuild = function(type,x,z,angle=0) {
     if (!structural(type)) return base.snap.call(this,type,x,z,angle);
-    angle = edge(type) ? edgeAngle(angle) : Math.round(angle/(Math.PI/2))*Math.PI/2;
-    if (!edge(type)) return {x:Math.round(x/3)*3,z:Math.round(z/3)*3,angle};
-    // Pick a real floor edge, not just a mathematical grid. The requested
-    // direction is strict: "横向" only evaluates the north/south edges and
-    // "竖向" only evaluates east/west edges. This prevents auto-snap from
-    // silently changing the direction selected by the player.
+    if (!edge(type)) {
+      angle = Math.round((angle||0)/(Math.PI/2))*(Math.PI/2);
+      return {x:Math.round(x/3)*3,z:Math.round(z/3)*3,angle};
+    }
+    // "横向" only uses north/south floor edges and "竖向" only east/west.
+    // Never substitute the other direction. Prefer a free edge within reach
+    // so an occupied near edge does not block the opposite wall.
+    angle = edgeAngle(angle);
     const choices=[];
     for (const floor of this.buildings.filter(b=>b.type==="floor" && mine(this,b))) {
-      choices.push(
-        {x:floor.x,z:floor.z-1.5,angle:0}, {x:floor.x,z:floor.z+1.5,angle:0},
-        {x:floor.x-1.5,z:floor.z,angle:Math.PI/2}, {x:floor.x+1.5,z:floor.z,angle:Math.PI/2},
-      );
+      if (angle === 0) choices.push({x:floor.x,z:floor.z-1.5,angle:0},{x:floor.x,z:floor.z+1.5,angle:0});
+      else choices.push({x:floor.x-1.5,z:floor.z,angle:Math.PI/2},{x:floor.x+1.5,z:floor.z,angle:Math.PI/2});
     }
-    const matching=choices.filter(choice=>choice.angle===angle);
-    const pool=matching.length?matching:choices;
-    if (pool.length) return pool.reduce((best,choice)=>{
-      const d=(choice.x-x)**2+(choice.z-z)**2;
-      const bestD=(best.x-x)**2+(best.z-z)**2;
-      return d<bestD?choice:best;
-    });
+    const occupied = c => this.buildings.some(b => edge(b.type) && dist(b, c) < .2);
+    const ranked = choices.map(c => ({...c, d:(c.x-x)**2+(c.z-z)**2, free:!occupied(c)}));
+    ranked.sort((a,b)=>a.d-b.d);
+    const nearFree = ranked.filter(c => c.free && c.d < 36);
+    const pool = nearFree.length ? nearFree : ranked;
+    if (pool.length) return {x:pool[0].x,z:pool[0].z,angle:pool[0].angle};
     const sideways = angle === Math.PI/2;
     const ox = sideways ? 1.5 : 0, oz = sideways ? 0 : 1.5;
     return {x:Math.round((x-ox)/3)*3+ox,z:Math.round((z-oz)/3)*3+oz,angle};
