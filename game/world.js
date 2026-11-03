@@ -1,4 +1,5 @@
 import { installHome } from './home.js';
+import { snapFence, segmentsConflict, halfExtent, FENCE_HALF, resolveFence } from './placement.js';
 export const TAU = Math.PI * 2;
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -105,7 +106,7 @@ export const BUILDS = {
   },
   fence: {
     name: "木栅栏",
-    description: "自动对齐相邻栅栏，阻挡靠近的生物。",
+    description: "可旋转。端点、转角和网格都会自动对齐。",
     icon: "fence",
     cost: { wood: 3 },
     radius: 1.4,
@@ -864,18 +865,7 @@ export class Game {
   }
   snapBuild(type, x, z, angle = 0) {
     if (type !== "fence") return { x, z, angle };
-    const step = Math.PI / 4, half = 1.3;
-    angle = Math.round(angle / step) * step;
-    const endpoints = [];
-    for (const b of this.buildings.filter((b) => b.type === "fence")) {
-      const a = b.angle || 0, dx = Math.cos(a) * half, dz = -Math.sin(a) * half;
-      endpoints.push({x:b.x-dx,z:b.z-dz},{x:b.x+dx,z:b.z+dz});
-    }
-    const end = endpoints.map(p=>({...p,d:Math.hypot(x-p.x,z-p.z)})).filter(p=>p.d<2.8).sort((a,b)=>a.d-b.d)[0];
-    if (!end) return {x,z,angle};
-    const dx=Math.cos(angle)*half,dz=-Math.sin(angle)*half;
-    const side=(x-end.x)*dx+(z-end.z)*dz>=0?1:-1;
-    return {x:end.x+dx*side,z:end.z+dz*side,angle};
+    return snapFence(this.buildings, x, z, angle);
   }
   recycleNearest() {
     const list = this.buildings
@@ -1013,9 +1003,13 @@ export class Game {
     const r = BUILDS[type].radius;
     return (
       !this.buildings.some((b) => {
-        const d=dist(b,{x,z});
-        // Fence segments may meet at an endpoint (including 45/90-degree corners).
-        if(type==="fence" && b.type==="fence") return d<0.5;
+        if (type === "fence" && (b.type === "fence" || b.type === "wall" || b.type === "door")) {
+          return segmentsConflict(
+            { x, z, angle, half: FENCE_HALF },
+            { x: b.x, z: b.z, angle: b.angle || 0, half: halfExtent(b.type) },
+          );
+        }
+        const d = dist(b, { x, z });
         return d < r + BUILDS[b.type].radius + 0.3;
       }) &&
       !this.world.nodes.some(
@@ -1056,10 +1050,10 @@ export class Game {
       }
       for (const b of this.buildings) {
         if (b.type !== "fence") continue;
-        let d = Math.hypot(x - b.x, z - b.z);
-        if (d < 1.32 && d > 0.001) {
-          x = b.x + ((x - b.x) / d) * 1.32;
-          z = b.z + ((z - b.z) / d) * 1.32;
+        const pushed = resolveFence(x, z, b);
+        if (pushed) {
+          x = pushed.x;
+          z = pushed.z;
         }
       }
     }
